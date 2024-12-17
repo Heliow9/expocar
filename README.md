@@ -68,38 +68,14 @@ Estrutura do Projeto 🏗️
   ├── utils/              # ⚙️ Funções utilitárias.
   └── assets/             # 🖼️ Imagens e outros arquivos estáticos.
 
-Como Executar o Projeto 🏃‍♂️
 
-Clone o repositório:
-
-git clone https://github.com/seu-usuario/seu-repositorio.git
-cd seu-repositorio
-
-Instale as dependências:
-
-npm install
-
-Configure as variáveis de ambiente:
-Crie um arquivo .env com as seguintes configurações:
-
-FIREBASE_API_KEY=your_firebase_api_key
-FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
-FIREBASE_PROJECT_ID=your_firebase_project_id
-FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
-FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
-FIREBASE_APP_ID=your_firebase_app_id
-
-Execute o app:
-
-expo start
 
 Planejamentos Futuros 🔮
 
 Adição de 🎨 animações aprimoradas na interface.
 
-Suporte para integrações adicionais, como 💳 pagamento TEF.
+Suporte para integrações adicionais como busca automatizada das informações dos veiculos
 
-Expansão para gerenciamento de candidatos 🧑‍🦽 PCD.
 
 Contribuições 🙌
 
