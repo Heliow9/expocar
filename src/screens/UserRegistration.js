@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { TextInput, Button, Snackbar, Provider, Text, RadioButton, Modal, Portal } from 'react-native-paper';
 import { auth, firestore } from '../database/firebase';
 import { createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { setDoc, doc, getDoc, collection } from 'firebase/firestore';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function UserRegistration({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [cpf, setCpf] = useState('');
-  const [role, setRole] = useState('');
+  const [role, setRole] = useState('user');
   const [ccNumber, setCcNumber] = useState('');
   const [ccData, setCcData] = useState(null);
   const [ccName, setCcName] = useState('');
@@ -22,6 +23,20 @@ export default function UserRegistration({ navigation }) {
   const [cpfError, setCpfError] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [registerButton, setRegisterButton] = useState(false);
+  const [birthDate, setBirthDate] = useState('');
+  const [rg, setRg] = useState('');
+  const [address, setAddress] = useState('');
+  const [cellphone, setCellphone] = useState('');
+  const [landline, setLandline] = useState('');
+  const [emergencyContactName, setEmergencyContactName] = useState('');
+  const [emergencyContactRelation, setEmergencyContactRelation] = useState('');
+  const [emergencyContactPhone, setEmergencyContactPhone] = useState('');
+  const [bloodType, setBloodType] = useState('');
+  const [medicalRestrictions, setMedicalRestrictions] = useState('');
+  const [generalObservations, setGeneralObservations] = useState('');
+  const [cnh, setCnh] = useState('');
+  const [cnhExpiration, setCnhExpiration] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const validateFields = () => {
     if (!email || !password || !name || !cpf) {
@@ -30,10 +45,19 @@ export default function UserRegistration({ navigation }) {
     }
     if (role === 'manager' || 'user' && !ccNumber) {
       setErrorMessage('Por favor, informe o número do Centro de Custo.');
+      setModalVisible(true);
       return false;
     }
     setErrorMessage('');
     return true;
+  };
+
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      const formattedDate = selectedDate.toISOString().split('T')[0]; // Formato ISO (YYYY-MM-DD)
+      setCnhExpiration(formattedDate);
+    }
   };
 
   useEffect(() => {
@@ -129,7 +153,22 @@ export default function UserRegistration({ navigation }) {
         email: user.email,
         name: name,
         role: role,
-        cpf: cpf.replace(/\D/g, '')
+        cpf: cpf.replace(/\D/g, ''),
+        birthDate,
+        rg,
+        cnh,
+        cnhExpiration,
+        address,
+        cellphone,
+        landline,
+        emergencyContact: {
+          name: emergencyContactName,
+          relation: emergencyContactRelation,
+          phone: emergencyContactPhone,
+        },
+        bloodType,
+        medicalRestrictions,
+        generalObservations,
       };
 
       if (role === "manager" || role === 'user') {
@@ -184,49 +223,9 @@ export default function UserRegistration({ navigation }) {
 
   return (
     <Provider>
+
       <View style={styles.container}>
         <Text style={styles.title}>Cadastro de Usuário</Text>
-
-        <TextInput
-          label="Nome"
-          value={name}
-          onChangeText={setName}
-          style={styles.input}
-          error={!name && !!errorMessage}
-        />
-        <TextInput
-          label="Email"
-          value={email}
-          onChangeText={(text) => {
-            setEmail(text);
-            setEmailError('');
-          }}
-          style={styles.input}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          error={!!emailError}
-        />
-        {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
-
-        <TextInput
-          label="CPF"
-          value={cpf}
-          onChangeText={handleCpfChange}
-          style={{ marginBottom: 8 }}
-          keyboardType="numeric"
-          maxLength={14} // Limita o CPF formatado com a máscara
-        />
-        {cpfError ? <Text style={{ color: 'red' }}>{cpfError}</Text> : null}
-
-        <TextInput
-          label="Senha"
-          value={password}
-          onChangeText={setPassword}
-          style={styles.input}
-          secureTextEntry
-          error={!password && !!errorMessage}
-        />
-
         <Text style={styles.label}>Tipo de Usuário</Text>
         <RadioButton.Group
           onValueChange={(newRole) => {
@@ -241,6 +240,214 @@ export default function UserRegistration({ navigation }) {
             <RadioButton.Item label="Administrador" value="admin" />
           </View>
         </RadioButton.Group>
+        {
+          role === 'user' ?
+            <>
+              <ScrollView contentContainerStyle={styles.scrollContainer}>
+
+                <TextInput
+                  label="Nome Completo"
+                  value={name}
+                  onChangeText={setName}
+                  style={styles.input}
+                  error={!name && !!errorMessage}
+                />
+
+                <TextInput
+                  label="Data de Nascimento"
+                  value={birthDate}
+                  onChangeText={setBirthDate}
+                  style={styles.input}
+                  placeholder="DD/MM/AAAA"
+                  keyboardType="numeric"
+                />
+
+                <TextInput
+                  label="RG"
+                  value={rg}
+                  onChangeText={setRg}
+                  style={styles.input}
+                />
+
+                {/* Campo para CNH */}
+                <TextInput
+                  label="Número da CNH"
+                  value={cnh}
+                  onChangeText={setCnh}
+                  style={styles.input}
+                  keyboardType="numeric"
+                />
+
+                {/* Campo para Vencimento da CNH */}
+                <TextInput
+                  label="Vencimento da CNH"
+                  value={cnhExpiration}
+                  onFocus={() => setShowDatePicker(true)}
+                  style={styles.input}
+                  editable={true}
+                />
+
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={new Date()}
+                    mode="date"
+                    display="default"
+                    onChange={handleDateChange}
+                  />
+                )}
+
+                <TextInput
+                  label="Endereço Completo"
+                  value={address}
+                  onChangeText={setAddress}
+                  style={styles.input}
+                  placeholder="Rua, número, bairro, cidade, estado, CEP"
+                />
+
+                <TextInput
+                  label="Telefone Celular"
+                  value={cellphone}
+                  onChangeText={setCellphone}
+                  style={styles.input}
+                  keyboardType="phone-pad"
+                />
+
+                <TextInput
+                  label="Telefone Fixo (opcional)"
+                  value={landline}
+                  onChangeText={setLandline}
+                  style={styles.input}
+                  keyboardType="phone-pad"
+                />
+
+                <TextInput
+                  label="E-mail"
+                  value={email}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    setEmailError('');
+                  }}
+                  style={styles.input}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  error={!!emailError}
+                />
+                {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+
+
+
+                <TextInput
+                  label="CPF"
+                  value={cpf}
+                  onChangeText={handleCpfChange}
+                  style={{ marginBottom: 8 }}
+                  keyboardType="numeric"
+                  maxLength={14} // Limita o CPF formatado com a máscara
+                />
+                {cpfError ? <Text style={{ color: 'red' }}>{cpfError}</Text> : null}
+
+                <TextInput
+                  label="Senha"
+                  value={password}
+                  onChangeText={setPassword}
+                  style={styles.input}
+                  secureTextEntry
+                  error={!password && !!errorMessage}
+                />
+
+                <TextInput
+                  label="Contato de Emergência - Nome"
+                  value={emergencyContactName}
+                  onChangeText={setEmergencyContactName}
+                  style={styles.input}
+                />
+
+                <TextInput
+                  label="Contato de Emergência - Relação"
+                  value={emergencyContactRelation}
+                  onChangeText={setEmergencyContactRelation}
+                  style={styles.input}
+                />
+
+                <TextInput
+                  label="Contato de Emergência - Telefone"
+                  value={emergencyContactPhone}
+                  onChangeText={setEmergencyContactPhone}
+                  style={styles.input}
+                  keyboardType="phone-pad"
+                />
+
+                <TextInput
+                  label="Tipo Sanguíneo"
+                  value={bloodType}
+                  onChangeText={setBloodType}
+                  style={styles.input}
+                  placeholder="A+, B-, O+, etc."
+                />
+
+                <TextInput
+                  label="Alergias ou Restrições Médicas"
+                  value={medicalRestrictions}
+                  onChangeText={setMedicalRestrictions}
+                  style={styles.input}
+                  multiline
+                />
+
+
+                <TextInput
+                  label="Observações Gerais"
+                  value={generalObservations}
+                  onChangeText={setGeneralObservations}
+                  style={styles.input}
+                  multiline
+                />
+              </ScrollView>
+            </> :
+            <>
+              <TextInput
+                label="Nome"
+                value={name}
+                onChangeText={setName}
+                style={styles.input}
+                error={!name && !!errorMessage}
+              />
+              <TextInput
+                label="Email"
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  setEmailError('');
+                }}
+                style={styles.input}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                error={!!emailError}
+              />
+              {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+
+              <TextInput
+                label="CPF"
+                value={cpf}
+                onChangeText={handleCpfChange}
+                style={{ marginBottom: 8 }}
+                keyboardType="numeric"
+                maxLength={14} // Limita o CPF formatado com a máscara
+              />
+              {cpfError ? <Text style={{ color: 'red' }}>{cpfError}</Text> : null}
+
+              <TextInput
+                label="Senha"
+                value={password}
+                onChangeText={setPassword}
+                style={styles.input}
+                secureTextEntry
+                error={!password && !!errorMessage}
+              />
+            </>
+        }
+
+
+
 
         {!!errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
 
@@ -339,6 +546,11 @@ export default function UserRegistration({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center', // Alinha o conteúdo ao centro
+    padding: 20,
+  },
   container: {
     flex: 1,
     padding: 20,
@@ -379,5 +591,6 @@ const styles = StyleSheet.create({
     padding: 20,
     margin: 20,
     borderRadius: 8,
+    marginTop: -300
   },
 });

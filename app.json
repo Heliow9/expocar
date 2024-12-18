@@ -13,7 +13,14 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Este app precisa acessar sua localização em segundo plano para rastrear seu trajeto.",
+        "NSLocationWhenInUseUsageDescription": "Este app precisa acessar sua localização enquanto está em uso.",
+        "UIBackgroundModes": [
+          "location"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {

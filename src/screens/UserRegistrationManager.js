@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Platform, KeyboardAvoidingView, Keyboard } from 'react-native';
 import { TextInput, Button, Snackbar, Provider, Text, RadioButton, Modal, Portal } from 'react-native-paper';
 import { auth, firestore } from '../database/firebase';
 import { createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from 'firebase/auth';
@@ -39,6 +39,7 @@ export default function UserRegistrationManager({ navigation }) {
   const [cnhExpiration, setCnhExpiration] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [roleLevel, setRoleLevel] = useState('manager');
 
   const handleDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
@@ -92,6 +93,7 @@ export default function UserRegistrationManager({ navigation }) {
   };
 
   const handleCcVerification = async () => {
+    Keyboard.dismiss()
     const normalizedCcNumber = parseInt(ccNumber, 10).toString(); // Remove zeros à frente
     try {
       const docRef = doc(firestore, "cc", normalizedCcNumber);
@@ -254,8 +256,8 @@ export default function UserRegistrationManager({ navigation }) {
             style={styles.input}
           />
 
-           {/* Campo para CNH */}
-           <TextInput
+          {/* Campo para CNH */}
+          <TextInput
             label="Número da CNH"
             value={cnh}
             onChangeText={setCnh}
@@ -330,7 +332,7 @@ export default function UserRegistrationManager({ navigation }) {
             maxLength={14} // Limita o CPF formatado com a máscara
           />
           {cpfError ? <Text style={{ color: 'red' }}>{cpfError}</Text> : null}
-          
+
           <TextInput
             label="Senha"
             value={password}
@@ -416,78 +418,83 @@ export default function UserRegistrationManager({ navigation }) {
 
           <Portal>
             <Modal visible={modalVisible} onDismiss={() => setModalVisible(false)} contentContainerStyle={styles.modal}>
-              <Text style={styles.title}>Centro de Custo</Text>
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'} // Ajusta o comportamento para iOS e Android
+                
+              >
+                <Text style={styles.title}>Centro de Custo</Text>
 
-              <TextInput
-                label="Número do Centro de Custo"
-                value={ccNumber}
-                onChangeText={(text) => setCcNumber(text.replace(/[^0-9]/g, ''))} // Aceita apenas números
-                style={styles.input}
-                keyboardType="numeric"
-              />
-              <Button mode="contained" onPress={handleCcVerification} style={styles.button}>
-                Verificar Centro de Custo
-              </Button>
+                <TextInput
+                  label="Número do Centro de Custo"
+                  value={ccNumber}
+                  onChangeText={(text) => setCcNumber(text.replace(/[^0-9]/g, ''))} // Aceita apenas números
+                  style={styles.input}
+                  keyboardType="numeric"
+                />
+                <Button mode="contained" onPress={handleCcVerification} style={styles.button}>
+                  Verificar Centro de Custo
+                </Button>
 
-              {ccData && (
-                <View>
-                  <Text style={styles.infoText}>Nome: {ccData.ccnome}</Text>
-                  <Text style={styles.infoText}>Data: {ccData.ccdata}</Text>
-                  <Text style={styles.infoText}>CPF: {ccData.ccResponsavel}</Text>
-                  <Button
-                    mode="contained"
-                    onPress={() => {
-                      setModalVisible(false); // Fecha o modal
-                    }}
-                    style={styles.button}
-                  >
-                    Continuar
-                  </Button>
-                </View>
-              )}
+                {ccData && (
+                  <View>
+                    <Text style={styles.infoText}>Nome: {ccData.ccnome}</Text>
+                    <Text style={styles.infoText}>Data: {ccData.ccdata}</Text>
+                    <Text style={styles.infoText}>CPF: {ccData.ccResponsavel}</Text>
+                    <Button
+                      mode="contained"
+                      onPress={() => {
+                        setModalVisible(false); // Fecha o modal
+                      }}
+                      style={styles.button}
+                    >
+                      Continuar
+                    </Button>
+                  </View>
+                )}
 
-              {ccNotFound && (
-                <View>
+                {ccNotFound && (
+                  <View>
 
-                  {
-                    role === 'user' ? <>
-                      <Text style={styles.infoText}>Centro de Custo não encontrado.</Text>
-                    </> : <>
-                      <Text style={styles.infoText}>Centro de Custo não encontrado. Cadastre um novo:</Text>
-                      <TextInput
-                        label="Nome do Centro de Custo"
-                        value={ccName}
-                        onChangeText={setCcName}
-                        style={styles.input}
-                        onFocus={() => ccNotFound}
-                      />
-                      <TextInput
-                        label="CPF"
-                        value={cpf}
-                        onChangeText={setCpf}
-                        style={styles.input}
-                      />
-                      <Button
-                        mode="contained"
-                        onPress={async () => {
-                          const normalizedCcNumber = parseInt(ccNumber, 10).toString(); // Remove zeros à frente
-                          await setDoc(doc(firestore, "cc", normalizedCcNumber), {
-                            ccnome: ccName,
-                            ccdata: new Date().toISOString(),
-                            ccResponsavel: cpf,
-                          });
-                          setModalVisible(false); // Fecha o modal
-                        }}
-                        style={styles.button}
-                      >
-                        Cadastrar e Continuar
-                      </Button>
+                    {
+                      roleLevel === 'user' ? <>
+                        <Text style={styles.infoText}>Centro de Custo não encontrado.</Text>
+                      </> : <>
+                        <Text style={styles.infoText}>Centro de Custo não encontrado. Cadastre um novo:</Text>
+                        <TextInput
+                          label="Nome do Centro de Custo"
+                          value={ccName}
+                          onChangeText={setCcName}
+                          style={styles.input}
+                          onFocus={() => ccNotFound}
+                        />
+                        <TextInput
+                          label="CPF"
+                          value={cpf}
+                          onChangeText={setCpf}
+                          style={styles.input}
+                        />
+                        <Button
+                          mode="contained"
+                          onPress={async () => {
+                            const normalizedCcNumber = parseInt(ccNumber, 10).toString(); // Remove zeros à frente
+                            await setDoc(doc(firestore, "cc", normalizedCcNumber), {
+                              ccnome: ccName,
+                              ccdata: new Date().toISOString(),
+                              ccResponsavel: cpf,
+                            });
+                            setModalVisible(false); // Fecha o modal
+                          }}
+                          style={styles.button}
+                        >
+                          Cadastrar e Continuar
+                        </Button>
 
-                    </>
-                  }
+                      </>
+                    }
 
-                </View>
-              )}
+                  </View>
+                )}
+                 </KeyboardAvoidingView>
             </Modal>
           </Portal>
 
@@ -541,5 +548,6 @@ const styles = StyleSheet.create({
     padding: 20,
     margin: 20,
     borderRadius: 8,
+    marginTop:-300
   },
 });

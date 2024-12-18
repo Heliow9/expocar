@@ -218,56 +218,68 @@ const WeeklyChecklist = ({ route }) => {
     }
   };
 
-  const handleSaveChecklist = async () => {
-    setSendChecklist(true);
-    if (!canSubmit) {
-      Alert.alert('Aviso', 'Checklist diário já preenchido.');
+const handleSaveChecklist = async () => {
+  setSendChecklist(true);
+
+  // Validação para verificar se todas as imagens obrigatórias foram capturadas
+  if (!imageUris.oleoMotor || !imageUris.liquidoArrefecimento || !imageUris.nivelCombustivel) {
+    Alert.alert(
+      'Checklist erro',
+      'Você precisa capturar as imagens obrigatórias: Óleo do Motor, Líquido de Arrefecimento e Odômetro.'
+    );
+    setSendChecklist(false); // Desativa o envio para permitir novas tentativas
+    return;
+  }
+
+  if (!canSubmit) {
+    Alert.alert('Aviso', 'Checklist diário já preenchido.');
+    return;
+  }
+
+  let imagesUrls = {};
+  for (const key in imageUris) {
+    if (imageUris[key]) {
+      imagesUrls[key] = await uploadImage(imageUris[key]);
+    }
+  }
+
+  try {
+    // Obter a localização
+    const location = await getLocation();
+
+    // Verifique se a localização foi obtida
+    if (!location) {
+      Alert.alert('Erro', 'Não foi possível obter a localização.');
       return;
     }
-  
-    let imagesUrls = {};
-    for (const key in imageUris) {
-      if (imageUris[key]) {
-        imagesUrls[key] = await uploadImage(imageUris[key]);
-      }
-    }
-  
-    try {
-      // Obter a localização
-      const location = await getLocation();
-  
-      // Verifique se a localização foi obtida
-      if (!location) {
-        Alert.alert('Erro', 'Não foi possível obter a localização.');
-        return;
-      }
-  
-      const checklistData = {
-        Uemail,
-        vehicleId: vehicle ? vehicle.vehicleId : null,
-        items: {
-          ...checklist,
-          oleoMotor: { ...checklist.oleoMotor, imageUrl: imagesUrls.oleoMotor },
-          liquidoArrefecimento: { ...checklist.liquidoArrefecimento, imageUrl: imagesUrls.liquidoArrefecimento },
-          nivelCombustivel: { ...checklist.nivelCombustivel, imageUrl: imagesUrls.nivelCombustivel },
-        },
-        createdAt: Timestamp.fromDate(new Date()),
-        marca: vehicle ? vehicle.marca : null,
-        plate: vehicle ? vehicle.plate : null,
-        location: {
-          latitude: location.latitude,
-          longitude: location.longitude,
-        }, // Adiciona a localização
-      };
-  
-      await addDoc(collection(firestore, 'checklists'), checklistData);
-      Alert.alert('Sucesso', 'Checklist salvo com sucesso!');
-      setCanSubmit(false);
-    } catch (error) {
-      Alert.alert('Erro', 'Não foi possível salvar o checklist.');
-      console.error('Erro ao salvar checklist:', error);
-    }
-  };
+
+    const checklistData = {
+      Uemail,
+      vehicleId: vehicle ? vehicle.vehicleId : null,
+      items: {
+        ...checklist,
+        oleoMotor: { ...checklist.oleoMotor, imageUrl: imagesUrls.oleoMotor },
+        liquidoArrefecimento: { ...checklist.liquidoArrefecimento, imageUrl: imagesUrls.liquidoArrefecimento },
+        nivelCombustivel: { ...checklist.nivelCombustivel, imageUrl: imagesUrls.nivelCombustivel },
+      },
+      createdAt: Timestamp.fromDate(new Date()),
+      marca: vehicle ? vehicle.marca : null,
+      plate: vehicle ? vehicle.plate : null,
+      location: {
+        latitude: location.latitude,
+        longitude: location.longitude,
+      }, // Adiciona a localização
+    };
+
+    await addDoc(collection(firestore, 'checklists'), checklistData);
+    Alert.alert('Sucesso', 'Checklist salvo com sucesso!');
+    setCanSubmit(false);
+  } catch (error) {
+    Alert.alert('Erro', 'Não foi possível salvar o checklist.');
+    console.error('Erro ao salvar checklist:', error);
+  }
+};
+
 
   if (!vehicle) {
     return <Paragraph>Carregando veículo...</Paragraph>;

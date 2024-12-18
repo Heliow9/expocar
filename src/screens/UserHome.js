@@ -7,7 +7,7 @@ export default function UserHome({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Painel do Usuário</Text>
+      <Text style={styles.title}>Painel do Motorista</Text>
       <Button
         mode="contained"
         onPress={() => navigation.navigate('WeeklyChecklist', { Uemail })}
@@ -17,14 +17,14 @@ export default function UserHome({ navigation, route }) {
       </Button>
       <Button
         mode="contained"
-        onPress={() => navigation.navigate('WeeklyChecklist', { Uemail })}
+        onPress={() => navigation.navigate('RouterControl', { Uemail })}
         style={styles.button}
       >
         Controle de Rota
       </Button>
       <Button
         mode="contained"
-        onPress={() => navigation.navigate('WeeklyChecklist', { Uemail })}
+        onPress={() => navigation.navigate('CombustivelControl', { Uemail })}
         style={styles.button}
       >
         Controle de Combustivel
