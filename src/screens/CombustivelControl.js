@@ -9,7 +9,7 @@ const CombustivelControl = ({ route, navigation }) => {
     const { Uemail, uid } = route.params;
     const [beforeImage, setBeforeImage] = useState(null);
     const [afterImage, setAfterImage] = useState(null);
-    const [km, setKm] = useState('');
+    const [km, setKm] = useState(0);
     const [loading, setLoading] = useState(false);
     const [historico, setHistorico] = useState([]);
     const [vehicleIdentification, setVehicleIdentification] = useState('');
@@ -151,47 +151,52 @@ const CombustivelControl = ({ route, navigation }) => {
     const enviarAbastecimento = async () => {
 
         const lastKm = await buscarUltimoKm();
+        if (beforeImage && afterImage != null) {
+            if (km > lastKm) {
+                try {
+                    const vehicleId = await buscarVeiculo();  // Obter o ID do veículo vinculado ao usuário
 
+                    if (!vehicleId) return;
+                    const userDocRef = doc(firestore, 'fuel', Uemail);
+                    const userDocSnapshot = await getDoc(userDocRef);
 
-        if (km > lastKm) {
-            try {
-                const vehicleId = await buscarVeiculo();  // Obter o ID do veículo vinculado ao usuário
+                    const abastecimentoData = {
+                        vehicleId,
+                        vehicleIdentification: vehicleIdentification,
+                        km,
+                        beforeImage,
+                        afterImage,
+                        date: new Date(),
+                    };
 
-                if (!vehicleId) return;
-                const userDocRef = doc(firestore, 'fuel', Uemail);
-                const userDocSnapshot = await getDoc(userDocRef);
+                    if (userDocSnapshot.exists()) {
+                        await setDoc(userDocRef, {
+                            abastecimentos: arrayUnion(abastecimentoData),
+                        }, { merge: true });
+                    } else {
+                        await setDoc(userDocRef, {
+                            abastecimentos: [abastecimentoData],
+                        });
+                    }
 
-                const abastecimentoData = {
-                    vehicleId,
-                    vehicleIdentification: vehicleIdentification,
-                    km,
-                    beforeImage,
-                    afterImage,
-                    date: new Date(),
-                };
-
-                if (userDocSnapshot.exists()) {
-                    await setDoc(userDocRef, {
-                        abastecimentos: arrayUnion(abastecimentoData),
-                    }, { merge: true });
-                } else {
-                    await setDoc(userDocRef, {
-                        abastecimentos: [abastecimentoData],
-                    });
+                    Alert.alert('Sucesso', 'Registro de abastecimento enviado com sucesso!');
+                    navigation.goBack();
+                } catch (error) {
+                    console.error('Erro ao enviar abastecimento:', error);
+                    Alert.alert('Erro', 'Não foi possível registrar o abastecimento.');
+                } finally {
+                    setLoading(false);
+                    buscarHistoricoAbastecimento();  // Atualizar o histórico após o envio
                 }
-
-                Alert.alert('Sucesso', 'Registro de abastecimento enviado com sucesso!');
-                navigation.goBack();
-            } catch (error) {
-                console.error('Erro ao enviar abastecimento:', error);
-                Alert.alert('Erro', 'Não foi possível registrar o abastecimento.');
-            } finally {
-                setLoading(false);
-                buscarHistoricoAbastecimento();  // Atualizar o histórico após o envio
+            } else {
+                Alert.alert('Erro de Kilometragem', `O valor do km deve ser superior a ${lastKm} você não pode registrar um abastecimento com o valor: ${km}`);
             }
         } else {
-            Alert.alert('Erro de Kilometragem', `O valor do km deve ser superior a ${lastKm} você não pode registrar um abastecimento com o valor: ${km}`);
+            Alert.alert('Erro de Imagem', `É necesário anexar todas as imagems!`);
+
         }
+
+
     };
 
 
