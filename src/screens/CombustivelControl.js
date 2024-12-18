@@ -4,14 +4,20 @@ import { Button, Card, Text, IconButton, TextInput, useTheme, ActivityIndicator 
 import * as ImagePicker from 'expo-image-picker';
 import { doc, setDoc, getDocs, getDoc, arrayUnion, query, collection, where } from 'firebase/firestore';
 import { firestore } from '../database/firebase';
+import XLSX from 'xlsx';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+
 
 const CombustivelControl = ({ route, navigation }) => {
     const { Uemail, uid } = route.params;
+
     const [beforeImage, setBeforeImage] = useState(null);
     const [afterImage, setAfterImage] = useState(null);
     const [km, setKm] = useState(0);
     const [loading, setLoading] = useState(false);
     const [historico, setHistorico] = useState([]);
+    const [userData, setUserData] = useState([]);
     const [vehicleIdentification, setVehicleIdentification] = useState('');
 
     const theme = useTheme();
@@ -44,6 +50,21 @@ const CombustivelControl = ({ route, navigation }) => {
         }
         getVehicleIdentification()
     })
+
+    useEffect(() => {
+        async function handlerGetUserName() {
+            const userDocRef = doc(firestore, 'users', Uemail);
+            const userSnapshot = await getDoc(userDocRef);
+
+            if (userSnapshot.exists()) {
+                const userData = userSnapshot.data();
+                setUserData(userData)
+            } else {
+                console.log('Usuário não encontrado');
+            }
+        }
+        handlerGetUserName()
+    }, [])
 
     const buscarVeiculo = async () => {
         setLoading(true);
@@ -161,6 +182,7 @@ const CombustivelControl = ({ route, navigation }) => {
                     const userDocSnapshot = await getDoc(userDocRef);
 
                     const abastecimentoData = {
+                        userName: userData.name,
                         vehicleId,
                         vehicleIdentification: vehicleIdentification,
                         km,
@@ -201,31 +223,61 @@ const CombustivelControl = ({ route, navigation }) => {
 
 
 
-    const handleFuelControl = async () => {
-        if (!beforeImage || !afterImage) {
-            return Alert.alert('Atenção', 'Por favor, capture ambas as imagens do odômetro.');
-        }
 
-        if (!km || isNaN(km) || parseFloat(km) <= 0) {
-            return Alert.alert('Atenção', 'Insira uma quilometragem válida.');
+    const exportarHistoricoComoXLSX = async (historico) => {
+        if (!historico || historico.length === 0) {
+            Alert.alert('Aviso', 'Não há dados para exportar.');
+            return;
         }
 
         try {
-            setLoading(true);
-            setTimeout(() => {
-                Alert.alert('Sucesso', 'Informações de abastecimento registradas com sucesso!');
-                setKm('');
-                setBeforeImage(null);
-                setAfterImage(null);
-                setLoading(false);
-            }, 2000);
+            // Formatar dados para a planilha
+            const data = [
+                ['Usuario', 'Placa', 'Data', 'Km', 'Modelo', 'Combustivel'], // Cabeçalhos
+                ...historico.reverse().map((item) => [
+                    item.userName || 'N/A',
+                    item.vehicleId.plate.toUpperCase() || 'N/A',
+                    item.date.toDate().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) || 'N/A',
+                    item.km || 'N/A',
+                    item.vehicleId.modelo || 'N/A',
+                    item.vehicleId.combustivel || 'N/A',
+                ]),
+            ];
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+
+            ws['!cols'] = [
+                { wch: 20 }, // Largura para a coluna "Usuario"
+                { wch: 20 }, // Largura para a coluna "Data"
+                { wch: 25 }, // Largura para a coluna "Quantidade"
+                { wch: 12 }, // Largura para a coluna "Km"
+                { wch: 20 }, // Largura para a coluna "Preço"
+                { wch: 20 }, // Largura para a coluna "Total"
+            ];
+
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Histórico');
+
+            // Gerar o arquivo como Base64
+            const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+
+            // Caminho do arquivo no Expo
+            const fileUri = `${FileSystem.documentDirectory}historico_abastecimento.xlsx`;
+
+            // Salvar o arquivo
+            await FileSystem.writeAsStringAsync(fileUri, wbout, {
+                encoding: FileSystem.EncodingType.Base64,
+            });
+
+            // Compartilhar o arquivo
+            await Sharing.shareAsync(fileUri);
         } catch (error) {
-            console.error(error);
-            Alert.alert('Erro', 'Ocorreu um erro ao registrar as informações de abastecimento verifique.');
-        } finally {
-            setLoading(false);
+            console.error('Erro ao exportar XLSX:', error);
+            Alert.alert('Erro', 'Não foi possível exportar o histórico.');
         }
     };
+
 
     const renderHistoricoItem = ({ item }) => (
         <Card style={styles.historyCard}>
@@ -296,6 +348,18 @@ const CombustivelControl = ({ route, navigation }) => {
                         Registrar Abastecimento
                     </Button>
                 </Card.Actions>
+                <Card.Actions>
+                    <Button
+                        mode="contained-tonal"
+                        onPress={() => exportarHistoricoComoXLSX(historico)}
+                        loading={loading}
+                        disabled={loading}
+                        style={styles.exportButtom}
+                        icon="export"
+                    >
+                        Exportar Listagem
+                    </Button>
+                </Card.Actions>
             </Card>
 
             {loading && <ActivityIndicator animating={true} size="large" color={theme.colors.primary} />}
@@ -349,6 +413,11 @@ const styles = StyleSheet.create({
     submitButton: {
         flex: 1,
         marginVertical: 16,
+    },
+    exportButtom: {
+        flex: 1,
+        marginVertical: 10,
+        marginHorizontal: 100
     },
     historyList: {
         marginTop: 20,
