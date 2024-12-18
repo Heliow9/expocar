@@ -159,7 +159,7 @@ const CombustivelControl = ({ route, navigation }) => {
             }, 2000);
         } catch (error) {
             console.error(error);
-            Alert.alert('Erro', 'Ocorreu um erro ao registrar as informações de abastecimento.');
+            Alert.alert('Erro', 'Ocorreu um erro ao registrar as informações de abastecimento verifique.');
         } finally {
             setLoading(false);
         }
