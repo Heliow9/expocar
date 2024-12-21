@@ -31,7 +31,14 @@ export default function ManagerHome({ navigation, route }) {
 
       <Button
         mode="contained"
-        onPress={() => navigation.navigate('Allchecks')}
+        onPress={() => navigation.navigate('FuelFilter', {Uemail})}
+        style={styles.button}
+      >
+       Relatórios de Abastecimento
+      </Button>
+      <Button
+        mode="contained"
+        onPress={() => navigation.navigate('Allchecks', {Uemail})}
         style={styles.button}
       >
         Visualizar Checklists
