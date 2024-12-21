@@ -20,6 +20,7 @@ import UserRegistrationManager from './src/screens/UserRegistrationManager';
 import UsersViewerManager from './src/screens/UsersViewerManager';
 import RouterControl from './src/screens/RouterControl'
 import CombustivelControl from './src/screens/CombustivelControl';
+import FuelFilter from './src/screens/FuelFilter';
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -39,6 +40,7 @@ export default function App() {
           <Stack.Screen name="VehicleViewByUser" component={VehicleViewOne} options={{ title: 'Veiculos Vinculados' }} />
           <Stack.Screen name="WeeklyChecklist" component={WeeklyChecklist} options={{ title: 'Preencher Checklist Diário' }} />
           <Stack.Screen name="CombustivelControl" component={CombustivelControl} options={{ title: 'Controle de Combustivel' }} />
+          <Stack.Screen name="FuelFilter" component={FuelFilter} options={{ title: 'Relatório de Abastecimentos' }} />
           <Stack.Screen name="CheckList Diário" component={ChecklistViewer} />
           <Stack.Screen name="Allchecks" component={AllChecks} options={{ title: "Todos os Checklist" }} />
           <Stack.Screen name="Live Chat" component={LiveChat} />

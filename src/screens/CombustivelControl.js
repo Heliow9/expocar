@@ -233,6 +233,7 @@ const CombustivelControl = ({ route, navigation }) => {
         try {
             // Formatar dados para a planilha
             const data = [
+                ['Histórico de Abastecimento', '', '', '', '', ''], // Linha 1 com texto mesclado
                 ['Usuario', 'Placa', 'Data', 'Km', 'Modelo', 'Combustivel'], // Cabeçalhos
                 ...historico.reverse().map((item) => [
                     item.userName || 'N/A',
@@ -246,6 +247,19 @@ const CombustivelControl = ({ route, navigation }) => {
 
             const ws = XLSX.utils.aoa_to_sheet(data);
 
+        // Mesclar as células da linha 1
+        ws['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Mescla de A1 até F1
+        ];
+
+        // Definir estilo para a célula mesclada
+        ws['A1'].s = {
+            alignment: { horizontal: 'center', vertical: 'center' }, // Centraliza o texto
+            font: { bold: true }, // Aplica negrito
+            wrapText: true, // Faz o texto quebrar linha, se necessário
+        };
+
+        
             ws['!cols'] = [
                 { wch: 20 }, // Largura para a coluna "Usuario"
                 { wch: 20 }, // Largura para a coluna "Data"
@@ -346,18 +360,6 @@ const CombustivelControl = ({ route, navigation }) => {
                         icon="check"
                     >
                         Registrar Abastecimento
-                    </Button>
-                </Card.Actions>
-                <Card.Actions>
-                    <Button
-                        mode="contained-tonal"
-                        onPress={() => exportarHistoricoComoXLSX(historico)}
-                        loading={loading}
-                        disabled={loading}
-                        style={styles.exportButtom}
-                        icon="export"
-                    >
-                        Exportar Listagem
                     </Button>
                 </Card.Actions>
             </Card>
