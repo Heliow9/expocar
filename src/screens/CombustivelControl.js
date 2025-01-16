@@ -112,6 +112,7 @@ const CombustivelControl = ({ route, navigation }) => {
         }
     };
 
+
     const pickImage = async (type) => {
         try {
             const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -121,12 +122,12 @@ const CombustivelControl = ({ route, navigation }) => {
                     'A permissão para acessar a câmera é necessária para capturar imagens.'
                 );
             }
-
+    
             const result = await ImagePicker.launchCameraAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                mediaTypes: ImagePicker.MediaTypeOptions.Images, // Usar a constante correta
                 quality: 1,
             });
-
+    
             if (!result.canceled) {
                 if (type === 'before') {
                     setBeforeImage(result.assets[0].uri);
@@ -139,6 +140,7 @@ const CombustivelControl = ({ route, navigation }) => {
             Alert.alert('Erro', 'Não foi possível abrir a câmera. Tente novamente.');
         }
     };
+    
 
     const buscarUltimoKm = async () => {
         try {
@@ -183,6 +185,7 @@ const CombustivelControl = ({ route, navigation }) => {
 
                     const abastecimentoData = {
                         userName: userData.name,
+                        cc: userData.cc,
                         vehicleId,
                         vehicleIdentification: vehicleIdentification,
                         km,
