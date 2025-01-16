@@ -21,12 +21,12 @@ const FuelFilter = ({ route }) => {
     const [selectedDriver, setSelectedDriver] = useState('');
     const [selectedCostCenter, setSelectedCostCenter] = useState('');
     const [drivers] = useState(['João', 'Maria', 'Pedro']); // Simulação de motoristas disponíveis.
-    const [costCenters] = useState(['01', '02', '03']); // Simulação de centros de custo disponíveis.
     const [selectedMotorista, setSelectedMotorista] = useState('');
     const [menuVisible, setMenuVisible] = useState(false);
     const [driverName, setDriverName] = useState(false);
     const [motoristas, setMotoristas] = useState([])
-
+    const [selectedCcId, setSelectedCcId] = useState(''); // Estado para o id selecionado
+    const [costCenters, setCostCenter] = useState([]);
 
 
     useEffect(() => {
@@ -38,13 +38,14 @@ const FuelFilter = ({ route }) => {
                 const ccSnapshot = await getDocs(ccQuery);
 
                 const ccIds = ccSnapshot.docs.map((doc) => doc.id);
-
+                console.log(ccIds)
                 if (ccIds.length === 0) {
                     console.log('Nenhum centro de custo encontrado para este gestor.');
                     setMotoristas([]);
                     return;
                 }
-
+                // setSelectedCostCenter(ccIds[0]); // Define o primeiro centro de custo como selecionado por padrão
+                setCostCenter(ccIds)
                 // Buscar todos os usuários
                 const usersCollectionRef = collection(firestore, 'users');
                 const usersSnapshot = await getDocs(usersCollectionRef);
@@ -65,7 +66,7 @@ const FuelFilter = ({ route }) => {
                 });
 
                 setMotoristas(motoristasList);
-                console.log(motoristasList);
+
             } catch (error) {
                 console.error('Erro ao buscar motoristas:', error);
             }
@@ -97,7 +98,7 @@ const FuelFilter = ({ route }) => {
     const handleMenuOpen = () => {
         setMenuVisible(true); // Abre o menu
     };
-    console.log(selectedDriver)
+
 
     const renderInputs = () => {
         switch (filterType) {
@@ -143,22 +144,26 @@ const FuelFilter = ({ route }) => {
                             Selecione o Centro de Custo
                         </Text>
                         <Menu
-                            visible={!!selectedCostCenter}
-                            onDismiss={() => setSelectedCostCenter('')}
+                            visible={menuVisible}
+                            onDismiss={handleMenuDismiss}
                             anchor={
                                 <Button
                                     mode="outlined"
-                                    onPress={() => setSelectedCostCenter('open')}
+                                    onPress={handleMenuOpen} // Abre o menu ao clicar no botão
                                 >
-                                    {selectedCostCenter || 'Selecionar Centro de Custo'}
+                                    {selectedCostCenter || 'Selecione Centro de Custo'}
                                 </Button>
                             }
                         >
                             {costCenters.map((center, index) => (
                                 <Menu.Item
                                     key={index}
-                                    onPress={() => setSelectedCostCenter(center)}
+                                    onPress={() => {
+                                        setSelectedCostCenter(center);
+                                        setMenuVisible(false); // Fecha o menu após a seleção
+                                    }}
                                     title={center}
+                                    setMenuVisible
                                 />
                             ))}
                         </Menu>
