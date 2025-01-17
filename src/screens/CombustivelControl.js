@@ -113,33 +113,51 @@ const CombustivelControl = ({ route, navigation }) => {
     };
 
 
+   
+
     const pickImage = async (type) => {
         try {
+            // Solicita permissão para acessar a câmera
             const { status } = await ImagePicker.requestCameraPermissionsAsync();
             if (status !== 'granted') {
-                return Alert.alert(
+                Alert.alert(
                     'Permissão Negada',
-                    'A permissão para acessar a câmera é necessária para capturar imagens.'
+                    'O aplicativo precisa de permissão para acessar a câmera.'
                 );
+                return;
             }
     
+            // Abre a câmera
             const result = await ImagePicker.launchCameraAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images, // Usar a constante correta
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 quality: 1,
+                allowsEditing: false, // Pode causar crash em alguns dispositivos Android
             });
     
-            if (!result.canceled) {
+            console.log('Resultado da câmera:', result); // Log para verificar o retorno
+    
+            // ✅ Verifica se o usuário realmente tirou a foto
+            if (result.canceled) {
+                console.log('Usuário cancelou a captura de imagem.');
+                return; // Evita erro ao voltar sem tirar a foto
+            }
+    
+            // ✅ Verifica se `result.assets` existe antes de acessar
+            if (result.assets && result.assets.length > 0) {
                 if (type === 'before') {
                     setBeforeImage(result.assets[0].uri);
                 } else {
                     setAfterImage(result.assets[0].uri);
                 }
+            } else {
+                console.log('Nenhuma imagem foi capturada.');
             }
         } catch (error) {
-            console.error(error);
+            console.error('Erro ao capturar imagem:', error);
             Alert.alert('Erro', 'Não foi possível abrir a câmera. Tente novamente.');
         }
     };
+    
     
 
     const buscarUltimoKm = async () => {

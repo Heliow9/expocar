@@ -66,13 +66,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#f45214',
     textAlign: 'center',
     marginBottom: 24,
   },
   button: {
     marginVertical: 8,
     paddingVertical: 8,
-    backgroundColor: '#6200ee',
+    backgroundColor: '##f45214',
   },
 });

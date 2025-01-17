@@ -3,7 +3,7 @@ import { View, FlatList, StyleSheet, Alert } from 'react-native';
 import { Card, Title, Paragraph, Modal, Portal, Button, Provider, ActivityIndicator, TextInput } from 'react-native-paper';
 import { firestore } from "../database/firebase";
 import { collection, getDocs, doc, updateDoc, deleteDoc, getDoc, query, where, orderBy, limit } from 'firebase/firestore';
-
+import dayjs from 'dayjs'
 const VehicleView = () => {
     const [vehicles, setVehicles] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -12,6 +12,10 @@ const VehicleView = () => {
     const [cpfInputs, setCpfInputs] = useState(["", "", ""]);
     const [driverNames, setDriverNames] = useState([]);
     const [lastChecklistDate, setLastChecklistDate] = useState(null);
+
+
+
+
 
     const fetchVehicles = async () => {
         try {
@@ -44,7 +48,7 @@ const VehicleView = () => {
             const userSnapshot = await getDoc(userDoc);
             if (userSnapshot.exists()) {
                 const userData = userSnapshot.data();
-                return userData.nome || 'Nome não disponível';
+                return userData.name || 'Nome não disponível';
             }
             return 'Não vinculado';
         } catch (error) {
@@ -172,6 +176,42 @@ const VehicleView = () => {
         </Card>
     );
 
+    const today = dayjs();
+
+    // Obtém o último caractere da placa para definir a data de vencimento
+    const lastDigit = selectedVehicle.plate.slice(-1);
+
+    // Definição das datas de vencimento baseadas no final da placa
+    const ipvaDueDates = {
+        "1": "2025-02-05",
+        "2": "2025-02-05",
+        "3": "2025-02-10",
+        "4": "2025-02-10",
+        "5": "2025-02-15",
+        "6": "2025-02-15",
+        "7": "2025-02-20",
+        "8": "2025-02-20",
+        "9": "2025-02-25",
+        "0": "2025-02-25",
+    };
+
+    const ipvaDueDate = dayjs(ipvaDueDates[lastDigit]);
+    const diffDays = ipvaDueDate.diff(today, "day");
+
+    let ipvaStatus = "IPVA sem informação"; // Caso não tenha data cadastrada
+
+    if (diffDays < 0) {
+        ipvaStatus = "🚨 IPVA vencido!";
+    } else if (diffDays <= 7) {
+        ipvaStatus = "⚠️ IPVA vence em poucos dias!";
+    } else if (diffDays <= 30) {
+        ipvaStatus = "📅 IPVA vence em menos de um mês!";
+    } else if (diffDays <= 60) {
+        ipvaStatus = "📅 IPVA vence em dois meses!";
+    } else {
+        ipvaStatus = "✅ IPVA está regular.";
+    }
+
     return (
         <Provider>
             <View style={styles.container}>
@@ -191,7 +231,10 @@ const VehicleView = () => {
                         {selectedVehicle && (
                             <View>
                                 <Title style={styles.modalTitle}>{selectedVehicle.plate.toUpperCase()}</Title>
-                                
+                                {
+                                    selectedVehicle.plate ? <Paragraph style={styles.modalParagraph}>{ipvaStatus}</Paragraph> : null
+                                }
+
                                 {/* Exibir a data do último checklist abaixo da placa */}
                                 <Paragraph style={styles.modalParagraph}>
                                     Último Checklist: {lastChecklistDate ? lastChecklistDate.toDate().toLocaleDateString() : "Nenhum checklist encontrado"}

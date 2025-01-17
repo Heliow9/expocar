@@ -12,7 +12,7 @@ import VehicleViewOne from './src/screens/VehicleViewByUser'
 import WeeklyChecklist from './src/screens/WeeklyChecklist';
 import ChecklistViewer from './src/screens/ChecklistView';
 import AllChecks from './src/screens/AllChecks';
-import { Provider as PaperProvider } from 'react-native-paper';
+import { Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
 import LiveChat from './src/screens/Livechat';
 import LiveChatAdmin from './src/screens/LivechatAdmin';
 import ManagerHome from './src/screens/ManagerHome'
@@ -23,12 +23,23 @@ import CombustivelControl from './src/screens/CombustivelControl';
 import FuelFilter from './src/screens/FuelFilter';
 const Stack = createStackNavigator();
 
+
+
+const theme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: "#f45214", // Altera a cor principal dos componentes
+    underlineColor: "gray", // Altera a linha inferior do input
+  },
+};
+
 export default function App() {
   return (
-    <PaperProvider>
+    <PaperProvider theme={theme}>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="AuthScreen">
-          <Stack.Screen name="AuthScreen" component={AuthScreen} options={{ title: 'RealEnergy Car' }} />
+        <Stack.Navigator initialRouteName="AuthScreen" >
+          <Stack.Screen name="AuthScreen" component={AuthScreen} options={{ title: 'CheckFleet', headerShown: false, headerLeft:false }} />
           <Stack.Screen name="UserHome" component={UserHome} options={{ title: 'Painel do Motorista' }} />
           <Stack.Screen name="AdminHome" component={AdminHome} options={{ title: 'Painel do Administrador' }} />
           <Stack.Screen name="ManagerHome" component={ManagerHome} options={{ title: 'Painel do Gestor' }} />

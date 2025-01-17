@@ -1,78 +1,112 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Animated, Image, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from 'react-native';
-import { TextInput, Button, Snackbar } from 'react-native-paper';
+import { TextInput, Button, Snackbar, ActivityIndicator } from 'react-native-paper';
 import { auth, firestore } from '../database/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import logo from "../../assets/logo.png" // Importa a logo
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Importa o AsyncStorage
+import logo from "../../assets/icon.png";
+import { CommonActions } from '@react-navigation/native';
 
 export default function AuthScreen({ navigation }) {
   const [cpf, setCpf] = useState('');
   const [password, setPassword] = useState('');
   const [visible, setVisible] = useState(false);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true); // Adiciona um estado de carregamento
 
   const moveAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.loop(
-      Animated.sequence([  
-        Animated.timing(moveAnim, {
-          toValue: -35,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(moveAnim, {
-          toValue: 0,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
+      Animated.sequence([
+        Animated.timing(moveAnim, { toValue: -15, duration: 800, useNativeDriver: true }),
+        Animated.timing(moveAnim, { toValue: 0, duration: 6000, useNativeDriver: true }),
       ])
     ).start();
   }, [moveAnim]);
 
+  // Verifica se já existe um usuário salvo e redireciona automaticamente
+  useEffect(() => {
+    const checkLogin = async () => {
+      const storedUemail = await AsyncStorage.getItem('Uemail');
+      const storedRole = await AsyncStorage.getItem('role');
+
+      if (storedUemail && storedRole) {
+        redirectUser(storedRole, storedUemail);
+      } else {
+        setLoading(false); // Se não houver usuário, finaliza o carregamento
+      }
+    };
+
+    checkLogin();
+  }, []);
+
   const login = async () => {
     try {
-      // Procurar o e-mail pelo CPF no Firestore
+      // Buscar o e-mail pelo CPF no Firestore
       const userRef = doc(firestore, 'users', cpf);
       const userSnapshot = await getDoc(userRef);
 
       if (userSnapshot.exists()) {
         const userData = userSnapshot.data();
         const email = userData.email;
-
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const Uemail = userData.cpf;
         const role = userData.role;
-        if (role === 'admin') {
-          navigation.navigate('AdminHome', { userCredential, Uemail });
-        } else if (role === 'user') {
-          navigation.navigate('UserHome', { Uemail });
-        } else if(role === 'manager'){
-          navigation.navigate('ManagerHome', { Uemail });
+        const Uemail = userData.cpf;
 
-        }
-         else {
-          setVisible(true);
-        }
+        await signInWithEmailAndPassword(auth, email, password);
+
+        // Salva os dados no AsyncStorage
+        await AsyncStorage.setItem('Uemail', Uemail);
+        await AsyncStorage.setItem('role', role);
+
+        redirectUser(role, Uemail);
       } else {
         setError('Usuário não encontrado!');
         setVisible(true);
       }
     } catch (error) {
-      if (error.message === 'auth/invalid-credential') {
-        setError('Senha incorreta, verifique!');
-        setVisible(true);
-      }
+      setError('Erro ao fazer login! Verifique suas credenciais.');
+      setVisible(true);
       console.error("Erro ao fazer login: ", error);
     }
   };
 
+  // Função para redirecionar o usuário com base no papel (role)
+  const redirectUser = (role, Uemail) => {
+    let screenName = '';
+    if (role === 'admin') {
+      screenName = 'AdminHome';
+    } else if (role === 'user') {
+      screenName = 'UserHome';
+    } else if (role === 'manager') {
+      screenName = 'ManagerHome';
+    } else {
+      setError('Permissão não reconhecida!');
+      setVisible(true);
+      return;
+    }
+
+    // Redireciona diretamente para a tela do usuário
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: screenName, params: { Uemail } }],
+      })
+    );
+  };
+
+  // Se ainda estiver carregando, exibe o indicador de carregamento
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#f45214" />
+      </View>
+    );
+  }
+
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
         <View style={styles.container}>
           <Animated.View style={{ transform: [{ translateY: moveAnim }] }}>
@@ -85,6 +119,8 @@ export default function AuthScreen({ navigation }) {
             style={styles.input}
             keyboardType="numeric"
             autoCapitalize="none"
+            underlineColor="gray"
+            activeUnderlineColor="#f45214"
           />
           <TextInput
             label="Senha"
@@ -92,16 +128,13 @@ export default function AuthScreen({ navigation }) {
             value={password}
             onChangeText={setPassword}
             style={styles.input}
+            underlineColor="gray"
+            activeUnderlineColor="#f45214"
           />
           <Button mode="contained" onPress={login} style={styles.button}>
             Entrar
           </Button>
-          <Snackbar
-            visible={visible}
-            onDismiss={() => setVisible(false)}
-            duration={3000}
-            style={styles.snackbar}
-          >
+          <Snackbar visible={visible} onDismiss={() => setVisible(false)} duration={3000} style={styles.snackbar}>
             {error || 'Erro de autenticação!'}
           </Snackbar>
         </View>
@@ -117,12 +150,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#f4f4f8',
     justifyContent: 'center',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f4f4f8',
+  },
   logo: {
-    width: 120,
-    height: 120,
+    width: 280,
+    height: 190,
     alignSelf: 'center',
     marginBottom: 24,
-    resizeMode:'contain'
+    resizeMode: 'contain',
   },
   input: {
     marginBottom: 16,
@@ -131,9 +170,9 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 12,
     paddingVertical: 8,
-    backgroundColor: '#6200ee',
+    backgroundColor: '#f45214',
   },
   snackbar: {
-    backgroundColor: '#d32f2f',
+    backgroundColor: '#f45214',
   },
 });

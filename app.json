@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "RealCar52",
+    "name": "CheckFleetPRO",
     "slug": "RealCar52",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,10 +8,14 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "permissions": [
+      "CAMERA",
+      "MEDIA_LIBRARY"
+    ],
     "plugins": [
       [
         "expo-image-picker",
@@ -35,7 +39,10 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.heliow99.fleetcheck"
+      "package": "com.heliow99.fleetcheck",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -44,6 +51,7 @@
       "eas": {
         "projectId": "dea51389-076d-481c-b5ff-f07e883aa03a"
       }
-    }
+    },
+    "owner": "heliow99"
   }
 }

@@ -75,15 +75,137 @@ export const FetchByUserDate = async (driverId, startDate, endDate) => {
 
 
 
-export const FetcCCDate = async (cc) => {
+export const FetcCCDate = async (selectedCostCenter, startDate, endDate) => {
+    try {
+        // Verificando se as datas fornecidas são válidas
+        const parsedStartDate = new Date(startDate);
+        const parsedEndDate = new Date(endDate);
 
+        if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
+            console.error("Data inválida fornecida");
+            return [];
+        }
+
+        // Função para limpar horas, minutos e segundos da data
+        const clearTime = (date) => {
+            const newDate = new Date(date);
+            newDate.setHours(0, 0, 0, 0);
+            return newDate;
+        };
+
+        const startClearDate = clearTime(parsedStartDate);
+        const endClearDate = clearTime(parsedEndDate);
+
+        console.log("Start Date:", startClearDate);
+        console.log("End Date:", endClearDate);
+
+        // Buscando todos os documentos dentro da coleção 'fuel'
+        const fuelCollectionRef = collection(firestore, 'fuel');
+        const fuelSnapshot = await getDocs(fuelCollectionRef);
+
+        let filteredResults = [];
+
+        fuelSnapshot.forEach((doc) => {
+            const abastecimentos = doc.data().abastecimentos || [];
+
+            // Filtrando os abastecimentos dentro do intervalo de datas e pelo selectedCostCenter
+            const abastecimentosFiltrados = abastecimentos.filter((abastecimento) => {
+                if (!abastecimento.cc) return false; // Garante que existe a chave 'cc' no objeto
+
+                const abastecimentoDate = abastecimento.date.toDate();
+                const clearAbastecimentoDate = clearTime(abastecimentoDate);
+
+                return (
+                    abastecimento.cc === selectedCostCenter && // Filtra pelo centro de custo selecionado
+                    clearAbastecimentoDate >= startClearDate &&
+                    clearAbastecimentoDate <= endClearDate
+                );
+            });
+
+            // Se houver abastecimentos que atendam aos critérios, adiciona ao resultado final
+            if (abastecimentosFiltrados.length > 0) {
+                filteredResults.push(...abastecimentosFiltrados);
+            }
+        });
+
+        console.log("Abastecimentos filtrados:", filteredResults);
+
+        exportarHistoricoComoXLSX(filteredResults);
+
+        return filteredResults;
+    } catch (error) {
+        console.error("Erro ao buscar os abastecimentos:", error);
+        return [];
+    }
 }
 
 
 
-export const FetchDate = async () => {
+export const FetchDate = async (userCostCenters, startDate, endDate) => {
+    try {
+        // Verificando se as datas fornecidas são válidas
+        const parsedStartDate = new Date(startDate);
+        const parsedEndDate = new Date(endDate);
 
+        if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
+            console.error("Data inválida fornecida");
+            return [];
+        }
+
+        // Função para limpar horas, minutos e segundos da data
+        const clearTime = (date) => {
+            const newDate = new Date(date);
+            newDate.setHours(0, 0, 0, 0);
+            return newDate;
+        };
+
+        const startClearDate = clearTime(parsedStartDate);
+        const endClearDate = clearTime(parsedEndDate);
+
+        console.log("Start Date:", startClearDate);
+        console.log("End Date:", endClearDate);
+
+        // Buscando todos os documentos dentro da coleção 'fuel'
+        const fuelCollectionRef = collection(firestore, 'fuel');
+        const fuelSnapshot = await getDocs(fuelCollectionRef);
+
+        let filteredResults = [];
+
+        fuelSnapshot.forEach((doc) => {
+            const abastecimentos = doc.data().abastecimentos || [];
+
+            // Filtrando os abastecimentos apenas pelo intervalo de datas e pelo centro de custo do usuário
+            const abastecimentosFiltrados = abastecimentos.filter((abastecimento) => {
+                if (!abastecimento.cc) return false; // Garante que existe a chave 'cc' no objeto
+
+                const abastecimentoDate = abastecimento.date.toDate();
+                const clearAbastecimentoDate = clearTime(abastecimentoDate);
+
+                return (
+                    userCostCenters.includes(abastecimento.cc) && // Verifica se o centro de custo está no array do usuário
+                    clearAbastecimentoDate >= startClearDate &&
+                    clearAbastecimentoDate <= endClearDate
+                );
+            });
+
+            // Se houver abastecimentos que atendam aos critérios, adiciona ao resultado final
+            if (abastecimentosFiltrados.length > 0) {
+                filteredResults.push(...abastecimentosFiltrados);
+            }
+        });
+
+        console.log("Abastecimentos filtrados:", filteredResults);
+
+        exportarHistoricoComoXLSX(filteredResults);
+
+        return filteredResults;
+    } catch (error) {
+        console.error("Erro ao buscar os abastecimentos:", error);
+        return [];
+    }
 }
+
+
 
 
 const exportarHistoricoComoXLSX = async (historico) => {
@@ -97,9 +219,10 @@ const exportarHistoricoComoXLSX = async (historico) => {
         // Formatar dados para a planilha
         const data = [
             ['Histórico de Abastecimento', '', '', '', '', ''], // Linha 1 com texto mesclado
-            ['Usuario', 'Placa', 'Data', 'Km', 'Modelo', 'Combustivel'], // Cabeçalhos
+            ['Usuario', 'C.Custo', 'Placa', 'Data', 'Km', 'Modelo', 'Combustivel'], // Cabeçalhos
             ...historico.reverse().map((item) => [
                 item.userName || 'N/A',
+                item.cc || 'N/A',
                 item.vehicleId.plate.toUpperCase() || 'N/A',
                 item.date.toDate().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) || 'N/A',
                 item.km || 'N/A',

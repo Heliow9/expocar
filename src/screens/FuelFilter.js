@@ -8,7 +8,7 @@ import { firestore } from '../database/firebase'
 import XLSX from 'xlsx';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { FetchByUserDate } from '../utils/report';
+import { FetchByUserDate, FetcCCDate, FetchDate } from '../utils/report';
 const FuelFilter = ({ route }) => {
 
     const { Uemail, uid } = route.params;
@@ -27,6 +27,7 @@ const FuelFilter = ({ route }) => {
     const [motoristas, setMotoristas] = useState([])
     const [selectedCcId, setSelectedCcId] = useState(''); // Estado para o id selecionado
     const [costCenters, setCostCenter] = useState([]);
+
 
 
     useEffect(() => {
@@ -74,6 +75,8 @@ const FuelFilter = ({ route }) => {
 
         fetchMotoristas();
     }, [Uemail]);
+
+
 
 
 
@@ -230,11 +233,22 @@ const FuelFilter = ({ route }) => {
         </>
     );
 
-    function handlerGetReport() {
-        if (selectedDriver) {
-            FetchByUserDate(selectedDriver, startDate, endDate)
+    function handlerGetReportMotorista() {
+        if (filterType === 'motorista') {
+
+            if (selectedDriver) {
+                FetchByUserDate(selectedDriver, startDate, endDate)
+            } else {
+                return Alert.alert('Erro', 'Selecione um motorista')
+            }
+        } else if (filterType === 'centroCusto') {
+            if (selectedCostCenter) {
+                FetcCCDate(selectedCostCenter, startDate, endDate)
+            } else {
+                return Alert.alert('Erro', 'Selecione um centro-custo')
+            }
         } else {
-            return Alert.alert('Erro', 'Selecione um motorista')
+            FetchDate(costCenters, startDate, endDate)
         }
     }
 
@@ -271,7 +285,7 @@ const FuelFilter = ({ route }) => {
             </Card>
             <Button mode="contained" style={styles.submitButton}
 
-                onPress={() => handlerGetReport()}
+                onPress={() => handlerGetReportMotorista()}
 
             >
                 Gerar Relatório

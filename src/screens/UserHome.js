@@ -58,7 +58,8 @@ export default function UserHome({ navigation, route }) {
         icon="chat"
         label="Chat ao Vivo"
         onPress={() => navigation.navigate('Live Chat', { Uemail })}
-        labelStyle={{ color: '#ffffff' }} // Define a cor do texto do label
+        labelStyle={styles.fabColor} // Define a cor do texto do label
+
       />
     </View>
   );
@@ -74,21 +75,24 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#f45214',
     textAlign: 'center',
     marginBottom: 24,
   },
   button: {
     marginVertical: 8,
     paddingVertical: 8,
-    backgroundColor: '#6200ee',
+    backgroundColor: '#f45214',
   },
   fab: {
     position: 'absolute',
     margin: 16,
     right: 0,
     bottom: 0,
-    backgroundColor: '#6200ee',
-
+    backgroundColor: '#f45214',
+    
   },
+  fabColor:{
+    color:'white'
+  }
 });
