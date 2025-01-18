@@ -92,6 +92,26 @@ const WeeklyChecklist = ({ route }) => {
     }
   };
 
+  useEffect(() => {
+    const requestCameraPermission = async () => {
+      const { status } = await ImagePicker.getCameraPermissionsAsync();
+      
+      if (status !== 'granted') {
+        const { status: newStatus } = await ImagePicker.requestCameraPermissionsAsync();
+        
+        if (newStatus !== 'granted') {
+          Alert.alert(
+            'Permissão necessária',
+            'O acesso à câmera é essencial para capturar imagens no checklist.',
+            [{ text: 'OK' }]
+          );
+        }
+      }
+    };
+  
+    requestCameraPermission();
+  }, []);
+
 
   useEffect(() => {
     const fetchVehicle = async () => {
@@ -182,47 +202,14 @@ const WeeklyChecklist = ({ route }) => {
   };
 
   const captureImage = async (key) => {
-    try {
-        const isMotorola = Device.brand?.toLowerCase() === 'motorola';
-
-        if (isMotorola) {
-            console.warn('Usando react-native-image-crop-picker para Motorola');
-
-            const image = await ImageCropPicker.openCamera({
-                width: 300,
-                height: 400,
-                cropping: true,
-                compressImageQuality: 0.7,
-            });
-
-            if (image && image.path) {
-                setImageUris((prev) => ({ ...prev, [key]: image.path }));
-                setButtonsDisabled((prev) => ({ ...prev, [key]: true }));
-                Alert.alert('Sucesso', 'Imagem capturada com sucesso!');
-            }
-        } else {
-            console.warn('Usando expo-image-picker para outras marcas');
-
-            const { status } = await ImagePicker.requestCameraPermissionsAsync();
-            if (status !== 'granted') {
-                Alert.alert('Permissão Negada', 'O app precisa de permissão para acessar a câmera.');
-                return;
-            }
-
-            const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
-
-            if (!result.canceled && result.assets && result.assets.length > 0) {
-                const { uri } = result.assets[0];
-                setImageUris((prev) => ({ ...prev, [key]: uri }));
-                setButtonsDisabled((prev) => ({ ...prev, [key]: true }));
-                Alert.alert('Sucesso', 'Imagem capturada com sucesso!');
-            }
-        }
-    } catch (error) {
-        console.error('Erro ao capturar imagem:', error);
-        Alert.alert('Erro', 'Não foi possível abrir a câmera.');
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.4 });
+    if (!result.cancelled) {
+      const { uri } = result.assets[0];
+      setImageUris((prev) => ({ ...prev, [key]: uri }));
+      setButtonsDisabled((prev) => ({ ...prev, [key]: true }));
+      Alert.alert('Sucesso', 'Imagem capturada com sucesso!');
     }
-};
+  };
 
   const uploadImage = async (uri) => {
     try {

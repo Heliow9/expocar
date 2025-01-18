@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert, FlatList } from 'react-native';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,25 +11,39 @@ const RouterControl = () => {
   const [destination, setDestination] = useState('');
   const [returnAddress, setReturnAddress] = useState('');
   const [isTracking, setIsTracking] = useState(false);
+  const [routeData, setRouteData] = useState([]); // Estado para armazenar os pontos do roteiro
 
   useEffect(() => {
-    // Verifica se a tarefa de localização já está ativa
-    const checkIfTracking = async () => {
-      const tasks = await TaskManager.getRegisteredTasksAsync();
-      const isTaskRunning = tasks.some(task => task.taskName === LOCATION_TASK_NAME);
-      setIsTracking(isTaskRunning);
+    // Função para solicitar permissões de localização
+    const requestPermissions = async () => {
+      const { status } = await Location.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão necessária', 'Permita o acesso à localização para continuar.');
+        return;
+      }
+
+      const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
+      if (backgroundStatus !== 'granted') {
+        Alert.alert('Permissão de localização em segundo plano necessária', 'Permita o acesso à localização em segundo plano.');
+      }
     };
 
-    checkIfTracking();
+    requestPermissions(); // Solicitar permissões ao carregar o componente
+    loadStoredLocations(); // Carregar os pontos armazenados ao iniciar
   }, []);
 
-  const startTracking = async () => {
-    const { status } = await Location.requestBackgroundPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permissão necessária', 'Permita o acesso à localização para continuar.');
-      return;
-    }
+  // Função para carregar os dados do AsyncStorage e atualizar o estado
+  const loadStoredLocations = async () => {
+    const locationData = await AsyncStorage.getItem('locationData');
+    const parsedData = JSON.parse(locationData) || [];
+    setRouteData(parsedData);
+  };
 
+  const startTracking = async () => {
+    console.log("Iniciando o rastreamento...");
+  
+    // Se a permissão for concedida, inicia o rastreamento em segundo plano
+    console.log("Iniciando o rastreamento em segundo plano...");
     await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
       accuracy: Location.Accuracy.High,
       timeInterval: 5000, // Captura a cada 5 segundos
@@ -39,17 +53,18 @@ const RouterControl = () => {
         notificationBody: "Estamos registrando sua rota.",
       },
     });
-
+  
     // Salvar o destino
+    const destination = 'Seu destino'; // Substitua com o destino real
     await AsyncStorage.setItem('destination', destination);
-    setIsTracking(true);
+    console.log("Rastreamento iniciado com sucesso e destino salvo:", destination);
   };
+
 
   const stopTracking = async () => {
     await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
     setIsTracking(false);
 
-    // Salvar endereço de retorno e finalizar
     await AsyncStorage.setItem('returnAddress', returnAddress);
     const locationData = await AsyncStorage.getItem('locationData');
     const parsedData = JSON.parse(locationData) || [];
@@ -82,6 +97,18 @@ const RouterControl = () => {
           <Button title="Finalizar Dia" onPress={stopTracking} />
         </>
       )}
+
+      {/* Exibir os pontos de localização armazenados */}
+      <Text style={styles.label}>Pontos registrados:</Text>
+      <FlatList
+        data={routeData}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item, index }) => (
+          <Text style={styles.item}>
+            {index + 1}: {item.coords.latitude}, {item.coords.longitude}
+          </Text>
+        )}
+      />
     </View>
   );
 };
@@ -97,14 +124,19 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
     const { locations } = data;
     const locationData = await AsyncStorage.getItem('locationData');
     const parsedData = JSON.parse(locationData) || [];
-    
+
     // Adiciona o novo ponto de localização
-    parsedData.push({
+    const newPoint = {
       timestamp: Date.now(),
       coords: locations[0].coords,
-    });
+    };
 
+    parsedData.push(newPoint);
     await AsyncStorage.setItem('locationData', JSON.stringify(parsedData));
+
+    // Disparar um evento para atualizar a lista na tela
+    const event = new CustomEvent('updateRoute', { detail: parsedData });
+    document.dispatchEvent(event);
   }
 });
 
@@ -118,6 +150,12 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     padding: 10,
     marginBottom: 20,
+  },
+  item: {
+    fontSize: 14,
+    padding: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
   },
 });
 
