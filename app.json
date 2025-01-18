@@ -2,7 +2,7 @@
   "expo": {
     "name": "CheckFleetPRO",
     "slug": "RealCar52",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -32,11 +32,12 @@
         "UIBackgroundModes": [
           "location"
         ]
-      }
+      },
+      "bundleIdentifier": "com.heliow99.fleetcheck"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/icon2.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.heliow99.fleetcheck",

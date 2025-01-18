@@ -130,8 +130,8 @@ const CombustivelControl = ({ route, navigation }) => {
             // Abre a câmera
             const result = await ImagePicker.launchCameraAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                quality: 1,
-                allowsEditing: false, // Pode causar crash em alguns dispositivos Android
+                quality: 0.6,
+                allowsEditing: true, // Pode causar crash em alguns dispositivos Android
             });
     
             console.log('Resultado da câmera:', result); // Log para verificar o retorno

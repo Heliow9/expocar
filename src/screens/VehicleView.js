@@ -179,7 +179,7 @@ const VehicleView = () => {
     const today = dayjs();
 
     // Obtém o último caractere da placa para definir a data de vencimento
-    const lastDigit = selectedVehicle.plate.slice(-1);
+    const lastDigit = selectedVehicle?.plate ? selectedVehicle.plate.slice(-1) : "";
 
     // Definição das datas de vencimento baseadas no final da placa
     const ipvaDueDates = {

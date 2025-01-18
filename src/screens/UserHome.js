@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Button, Text, FAB } from 'react-native-paper';
-
+import { handleLogout } from '../utils/Logout'; // Importe a função de logout
 export default function UserHome({ navigation, route }) {
   const { Uemail } = route.params;
 
@@ -51,7 +51,15 @@ export default function UserHome({ navigation, route }) {
       >
         Ver notificações do Administrador
       </Button>
-
+    {/* Botão de Logout */}
+          <Button
+            mode="outlined"
+            onPress={() => handleLogout(navigation)} // Chama a função handleLogout
+            style={styles.logoutButton}
+            labelStyle={styles.logoutButtonLabel}
+          >
+            Sair
+          </Button>
       {/* Botão flutuante para Chat ao Vivo */}
       <FAB
         style={styles.fab}
@@ -94,5 +102,19 @@ const styles = StyleSheet.create({
   },
   fabColor:{
     color:'white'
-  }
+  },
+
+  logoutButton: {
+    marginTop: 20,
+    paddingVertical: 8,
+    borderColor: '#f45214',
+    borderWidth: 1,
+    backgroundColor: 'transparent',
+    alignSelf: 'center',
+    width: '80%',
+  },
+  logoutButtonLabel: {
+    color: '#f45214',
+    fontWeight: 'bold',
+  },
 });

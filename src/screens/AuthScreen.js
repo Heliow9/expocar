@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Animated, Image, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform } from 'react-native';
-import { TextInput, Button, Snackbar, ActivityIndicator } from 'react-native-paper';
+import { View, StyleSheet, Animated, Image, Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView, Platform, Text } from 'react-native';
+import { TextInput, Button, Snackbar, ActivityIndicator, Checkbox } from 'react-native-paper';
 import { auth, firestore } from '../database/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
@@ -14,6 +14,7 @@ export default function AuthScreen({ navigation }) {
   const [visible, setVisible] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true); // Adiciona um estado de carregamento
+  const [rememberCpf, setRememberCpf] = useState(false);
 
   const moveAnim = useRef(new Animated.Value(0)).current;
 
@@ -29,13 +30,19 @@ export default function AuthScreen({ navigation }) {
   // Verifica se já existe um usuário salvo e redireciona automaticamente
   useEffect(() => {
     const checkLogin = async () => {
+      const storedCpf = await AsyncStorage.getItem('savedCpf');
+      if (storedCpf) {
+        setCpf(storedCpf);
+        setRememberCpf(true); // Marca a opção como ativada
+      }
+
       const storedUemail = await AsyncStorage.getItem('Uemail');
       const storedRole = await AsyncStorage.getItem('role');
 
       if (storedUemail && storedRole) {
         redirectUser(storedRole, storedUemail);
       } else {
-        setLoading(false); // Se não houver usuário, finaliza o carregamento
+        setLoading(false);
       }
     };
 
@@ -43,6 +50,11 @@ export default function AuthScreen({ navigation }) {
   }, []);
 
   const login = async () => {
+    if (rememberCpf) {
+      await AsyncStorage.setItem('savedCpf', cpf);
+    } else {
+      await AsyncStorage.removeItem('savedCpf');
+    }
     try {
       // Buscar o e-mail pelo CPF no Firestore
       const userRef = doc(firestore, 'users', cpf);
@@ -66,9 +78,16 @@ export default function AuthScreen({ navigation }) {
         setVisible(true);
       }
     } catch (error) {
-      setError('Erro ao fazer login! Verifique suas credenciais.');
-      setVisible(true);
-      console.error("Erro ao fazer login: ", error);
+
+
+      // console.error("Erro ao fazer login: ", error.code);
+      if (error.code === 'auth/invalid-credential') {
+        setError('Senha incorreta')
+        setVisible(true)
+      } else if (error.code === 'auth/missing-password') {
+        setError('Senha precisa conter 6 ou mais digitos.')
+        setVisible(true)
+      }
     }
   };
 
@@ -122,6 +141,13 @@ export default function AuthScreen({ navigation }) {
             underlineColor="gray"
             activeUnderlineColor="#f45214"
           />
+          <View style={styles.checkboxContainer}>
+            <Checkbox
+              status={rememberCpf ? 'checked' : 'unchecked'}
+              onPress={() => setRememberCpf(!rememberCpf)}
+            />
+            <Text style={styles.checkboxLabel}>Lembrar CPF</Text>
+          </View>
           <TextInput
             label="Senha"
             secureTextEntry
@@ -174,5 +200,14 @@ const styles = StyleSheet.create({
   },
   snackbar: {
     backgroundColor: '#f45214',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  checkboxLabel: {
+    fontSize: 16,
+    color: '#333',
   },
 });
