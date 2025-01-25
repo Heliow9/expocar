@@ -5,7 +5,8 @@ import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
 import { firestore } from '../database/firebase';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
-import MapView, { Marker } from 'react-native-maps'; // Importar MapView e Marker
+import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
+
 
 const ChecklistView = ({ route }) => {
   const { Uemail } = route.params;
@@ -118,7 +119,7 @@ const ChecklistView = ({ route }) => {
                       <Text style={styles.itemLabel}>Nível de Combustível:</Text>
                       <Text style={styles.itemDetail}>Condição: {item.items.nivelCombustivel.condition}</Text>
                       <Text style={styles.itemDetail}>KM: {item.items.nivelCombustivel.km}</Text>
-                      
+
                       {item.items.nivelCombustivel.imageUrl && (
                         <View>
                           <Image
@@ -139,7 +140,7 @@ const ChecklistView = ({ route }) => {
                     <View style={styles.itemContainer}>
                       <Text style={styles.itemLabel}>Líquido de Arrefecimento:</Text>
                       <Text style={styles.itemDetail}>Condição: {item.items.liquidoArrefecimento.condition}</Text>
-                      
+
                       {item.items.liquidoArrefecimento.imageUrl && (
                         <View>
                           <Image
@@ -160,7 +161,7 @@ const ChecklistView = ({ route }) => {
                     <View style={styles.itemContainer}>
                       <Text style={styles.itemLabel}>Óleo do Motor:</Text>
                       <Text style={styles.itemDetail}>Condição: {item.items.oleoMotor.condition}</Text>
-                      
+
                       {item.items.oleoMotor.imageUrl && (
                         <View>
                           <Image
@@ -177,10 +178,11 @@ const ChecklistView = ({ route }) => {
                   )}
 
                   {/* Exibir localização no mapa, se disponível */}
-                  {item.location && item.location.latitude && item.location.longitude && (
+                  {/* {item.location && item.location.latitude && item.location.longitude && (
                     <View style={styles.mapContainer}>
                       <Text style={styles.itemLabel}>Localização do Checklist:</Text>
                       <MapView
+                        provider={PROVIDER_DEFAULT} // Usa OpenStreetMap
                         style={styles.map}
                         initialRegion={{
                           latitude: item.location.latitude,
@@ -198,7 +200,9 @@ const ChecklistView = ({ route }) => {
                         />
                       </MapView>
                     </View>
-                  )}
+                  )} */}
+
+
                 </View>
               )}
             </Card>

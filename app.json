@@ -2,10 +2,11 @@
   "expo": {
     "name": "CheckFleetPRO",
     "slug": "RealCar52",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+      "jsEngine": "hermes",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/icon.png",
@@ -51,7 +52,10 @@
         "android.permission.ACCESS_BACKGROUND_LOCATION"
         
       ],
-      "backgroundLocation": true
+      "backgroundLocation": true,
+      "googleMaps": {
+        "apiKey": "SUA_API_KEY_AQUI"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

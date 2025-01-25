@@ -3,6 +3,7 @@ import { View, FlatList, StyleSheet, Alert } from 'react-native';
 import { Card, Title, Paragraph, Modal, Portal, Button, Provider, ActivityIndicator, TextInput } from 'react-native-paper';
 import { firestore } from "../database/firebase";
 import { collection, getDocs, doc, updateDoc, deleteDoc, getDoc, query, where, orderBy, limit } from 'firebase/firestore';
+import * as DocumentPicker from 'expo-document-picker';
 import dayjs from 'dayjs'
 const VehicleView = () => {
     const [vehicles, setVehicles] = useState([]);
@@ -12,7 +13,8 @@ const VehicleView = () => {
     const [cpfInputs, setCpfInputs] = useState(["", "", ""]);
     const [driverNames, setDriverNames] = useState([]);
     const [lastChecklistDate, setLastChecklistDate] = useState(null);
-
+    const [crlvUri, setCrvlUri] = useState(null); // Estado para armazenar o URI do CRLV
+    
 
 
 
@@ -81,7 +83,8 @@ const VehicleView = () => {
 
     useEffect(() => {
         fetchVehicles();
-    }, []);
+        
+    }, [cpfInputs]);
 
     useEffect(() => {
         console.log("Data do último checklist:", lastChecklistDate); // Log da data do último checklist
@@ -227,10 +230,12 @@ const VehicleView = () => {
                 )}
 
                 <Portal>
+                    
                     <Modal visible={modalVisible} onDismiss={closeModal} contentContainerStyle={styles.modal}>
                         {selectedVehicle && (
                             <View>
                                 <Title style={styles.modalTitle}>{selectedVehicle.plate.toUpperCase()}</Title>
+                               
                                 {
                                     selectedVehicle.plate ? <Paragraph style={styles.modalParagraph}>{ipvaStatus}</Paragraph> : null
                                 }

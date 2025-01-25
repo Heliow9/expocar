@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Button, Text, FAB } from 'react-native-paper';
 import { handleLogout } from '../utils/Logout'; // Importe a função de logout
+
 export default function UserHome({ navigation, route }) {
   const { Uemail } = route.params;
 
